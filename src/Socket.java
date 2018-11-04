@@ -1,21 +1,16 @@
-
 import java.net.*;
 import java.util.concurrent.*;
 
-import javafx.scene.control.TextField;
-
 public class Socket {
 
-	private textingWindow window;
 	private InetAddress myAddress;
 	private int port;
 	private DatagramSocket socket = null;
 	private ConcurrentLinkedQueue <DatagramPacket> messageQueue = new ConcurrentLinkedQueue<DatagramPacket>();
 	
 
-	public Socket(int port, textingWindow window){
+	public Socket(int port){
 		this.port = port;
-		this.window = window;
 		try{
 			this.myAddress = InetAddress.getLocalHost();
 			this.socket = new DatagramSocket(port, this.myAddress);
@@ -56,13 +51,11 @@ public class Socket {
 				System.exit(-1);
 			}
 			String message = new String(inPacket.getData());
-			/*window.addToTextA(" PORT: " + inPacket.getPort() + " AND IP: " + inPacket.getAddress()
-			+" SAID: " + message + "\n");*/
 			System.out.println(" ReceiveThread - Message on port = " + this.port + "\n"
 					+ " Message = " + message + "\n" +
 					" From IP = " + inPacket.getAddress()+ "\n" +
 					" From Port = " + inPacket.getPort());
-			
+
 			messageQueue.add(inPacket);
 			
 		} while(true);
@@ -71,7 +64,6 @@ public class Socket {
 	
 	public DatagramPacket receive(){
 		return messageQueue.poll();
-		
 		
 	}
 	

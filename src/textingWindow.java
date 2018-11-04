@@ -14,16 +14,23 @@ import javafx.stage.Stage;
 
 public class textingWindow {
 	
+	/*________________________*/
 	Socket socket;
 	TextArea area = new TextArea();
 	int usePort;
 	InetAddress destinationIP;
 	int destPort;
+	/*________________________*/
+
 	
+	/*________________________*/
+	int incomingPort;
+	InetAddress incomingIP;	
+	/*________________________*/
 	
 	public textingWindow(int usePort, InetAddress destIP, int destPort) {
 		this.usePort = usePort;
-		socket = new Socket(this.usePort, this);
+		socket = new Socket(this.usePort);
 		this.destinationIP = destIP;
 		this.destPort = destPort;
 		
@@ -33,7 +40,7 @@ public class textingWindow {
 				packet = socket.receive();
 				if(packet != null){
 					String message = new String(packet.getData());
-					System.out.println("TEXTING WINDOW NEW MESSAGE" + message);
+					System.out.println(" TEXTING WINDOW NEW MESSAGE: " + message + "\n");
 					Platform.runLater(() -> area.appendText(" PORT = " + destPort + 
 							" IP = " + destinationIP + " SAID: " + message + "\n"));	
 				}
@@ -44,6 +51,13 @@ public class textingWindow {
 		
 		newMessage.start();
 		
+	}
+	
+	public textingWindow(Socket receivingSocket, InetAddress incomingIP, int incomingPort){
+		this.incomingPort = incomingPort;
+		this.incomingIP = incomingIP;
+		this.socket = receivingSocket;
+
 	}
 	
 	public void display(String title){
@@ -88,16 +102,17 @@ public class textingWindow {
 			String message = messageInput.getText().toString();
 			messageInput.clear();
 			area.appendText(" ME: " + message + "\n");
-
+			
 			socket.send(message, destinationIP, destPort);
 			
+		
 			try{
 				TimeUnit.SECONDS.sleep(1);
 			}catch(Exception a){
 				a.printStackTrace();
 				System.exit(-1);
 			}});
-	
+
 		/*Layout utilized to place components together*/
 		VBox layout = new VBox();
 			layout.setSpacing(10);
@@ -111,7 +126,74 @@ public class textingWindow {
 		window.setScene(scene);
 		window.show();
 		}
-		/*METHOD TO APPEND MESSAGES ON THE TEXT AREA FROM A METHOD IN THE SOCKET CLASS*/
-		public void addToTextA(String msg) {
-		area.appendText(msg);
-		}}
+	
+	
+	public void displayIncome(String title){
+			Stage window = new Stage();
+			window.setTitle(title);
+			
+			/*Code for TextArea where users messages should appear*/
+			area = new TextArea();
+			area.setPrefSize(350, 350);
+			area.setEditable(false);
+			/*_______________________________________________________________*/
+			
+			/*Code for the TextField where user type message*/
+			TextField messageInput = new TextField();
+			
+			/*_______________________________________________________________*/
+			
+			/*Code for button that closes window*/
+			Button btnClose =  new Button();
+				btnClose.setStyle("-fx-font: 15 arial; -fx-base: #b6e7c9;");
+				btnClose.setText("CLOSE");
+				btnClose.setOnAction(e -> {
+					window.close();
+				});
+			/*_______________________________________________________________*/
+				
+			/*LABEL TO PROVIDE SENDER'S PORT NUMBER*/		
+			Label portNotification = new Label();
+			portNotification.setText(" Sender's Port is : " + this.socket
+					+" Destination port -----> "+ incomingPort);
+			/*________________________________________________________________*/
+			
+			/*Code for the button that send messages
+			 * When the send button is clicked, it will take the input and save it into a String.
+			 * The send method from the Socket class will take that message.
+			 * */
+			Button btnSend = new Button();
+			btnSend.setDefaultButton(true);
+				btnSend.setText("SEND");
+				btnSend.setStyle("-fx-font: 15 arial; -fx-base: #b6e7c9;");
+				btnSend.setOnAction(e -> {
+				String message = messageInput.getText().toString();
+				messageInput.clear();
+				area.appendText(" ME: " + message + "\n");
+
+				
+				socket.send(message, incomingIP, incomingPort);
+				
+				try{
+					TimeUnit.SECONDS.sleep(1);
+				}catch(Exception a){
+					a.printStackTrace();
+					System.exit(-1);
+				}});
+
+			/*Layout utilized to place components together*/
+			VBox layout = new VBox();
+				layout.setSpacing(10);
+				layout.setPadding(new Insets(5));
+				layout.setAlignment(Pos.CENTER_LEFT);
+				layout.getChildren().addAll(area,messageInput,btnSend,btnClose,portNotification);
+			/*__________________________________________________________________*/
+			
+			/*This makes the scene visible*/
+			Scene scene = new Scene(layout, 500, 500);
+			window.setScene(scene);
+			window.show();
+		}
+	}
+		
+

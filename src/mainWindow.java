@@ -1,6 +1,9 @@
+import java.net.DatagramPacket;
 import java.net.InetAddress;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -12,13 +15,24 @@ import javafx.stage.Stage;
 
 public class mainWindow extends Application{
 	
+	/*______________________________*/
 	Stage window;
 	int portEnteredInField; 
 	String ipEnteredInField;
 	int curPort = 10000;
+	/*______________________________*/
+	
+	Socket socket = new Socket(64000);
+	ConcurrentHashMap <String, textingWindow> hashMap = new ConcurrentHashMap<String, textingWindow>();
+	textingWindow incoming;
+	
 	
 	public static void main(String [] args){
 		launch(args);
+	}
+	public mainWindow(){
+		
+		listeningForIncoming();
 	}
 	
 	 public void start(Stage primaryStage){
@@ -43,7 +57,7 @@ public class mainWindow extends Application{
 		Button startChat = new Button();
 		startChat.setText("START CHAT");
 		startChat.setOnAction(e -> {
-			
+		
 		/*Taking input from IP text field*/
 		ipEnteredInField = ipTextField.getText();
 		/*______________________________________________________*/
@@ -63,12 +77,15 @@ public class mainWindow extends Application{
 		try{
 			textingWindow texting_window = new textingWindow(curPort++,InetAddress.getByName(ipEnteredInField),portEnteredInField);
 			texting_window.display(" IP: " + ipEnteredInField + " and Port: " + portEnteredInField);
+			
+			
 		}catch(Exception a){
 			a.printStackTrace();
 		}
-		/*__________________________________________________*/		
-			});
 		
+		/*__________________________________________________*/		
+		});
+
 		/*LAYOUT FOR THE MAIN WINDOW*/
 		VBox layout = new VBox();
 		layout.setSpacing(10);
@@ -77,7 +94,7 @@ public class mainWindow extends Application{
 		layout.getChildren().addAll(ipLabel,ipTextField,portLabel,portTextField,startChat);
 		/*___________________________________________________________________________________*/
 		
-		Scene scene = new Scene(layout, 200, 200);
+		Scene scene = new Scene(layout, 250, 200);
 		primaryStage.setScene(scene);
 		primaryStage.show();
 	}
@@ -97,7 +114,55 @@ public class mainWindow extends Application{
 		portEnteredInField = port;
 	}
 	
+	/*
+	 *	THIS METHOD ALLOWS THE MAIN WINDOW CLASS TO CONSTANTLY RECEIVE INCOMING MESSAGES
+	 *IF THE PACKET IS NOT EMPTY, THEN THE PORT AND THE IP OF THE SENDER WILL BE STORE AS A KEY VALUE,
+	 *TO BE SAVED IN A HASHMAP AND AVOID CREATING THE SAME WINDOW EVERY TIME THE RECIPIENT REPLIES BACK.
+	 *
+	 *	THIS METHOD IS CALLED INSIDE THE MAIN WINDOW CONSTRUCTOR.
+	 * */
+	public void listeningForIncoming(){
+		Thread newMessage = new Thread( () -> 
+		{ 	
+			
+			do{
+				DatagramPacket packet = socket.receive();
+				
+				if(packet != null){
+					Platform.runLater(new Runnable(){
+						@Override
+						public void run() {
+							if(!hashMap.containsKey(packet.getPort()+packet.getAddress().toString())){
+								
+							//String message = new String(packet.getData());
+							//incoming.area.appendText(" PORT: " + packet.getPort() + " AND IP: " + packet.getAddress() + " SAID: "+ message +"\n");
+							
+							String message = new String(packet.getData());
+							incoming = new textingWindow(socket,packet.getAddress(),packet.getPort());
+							incoming.displayIncome(" PORT: " + packet.getPort() + " IP: " + packet.getAddress());
+							incoming.area.appendText(" PORT: " + packet.getPort() + " AND IP: " + packet.getAddress() + " SAID: "+ message +"\n");
+							hashMap.put(packet.getPort()+packet.getAddress().toString(), incoming);
+							System.out.println(" MY KEY FOR THE HASHMAP: " + packet.getPort()+packet.getAddress().toString() + "\n");
+							
+							}else{
+								textingWindow stuff = hashMap.get(packet.getPort()+packet.getAddress().toString());
+								String message = new String(packet.getData());
+								System.out.println("ALREADY OPENED");
+								stuff.area.appendText(" PORT: " + packet.getPort() + " AND IP: " + packet.getAddress() + " SAID: "+ message +"\n");
+								
+							}
+							}
+					});
+				}
+			}while(true);
+	
+			});
+		
+		newMessage.start();
+		
 	}
+	}
+	
 	
 	
 
