@@ -13,187 +13,188 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 public class textingWindow {
-	
-	/*________________________*/
+
+	/* ________________________ */
 	Socket socket;
 	TextArea area = new TextArea();
 	int usePort;
 	InetAddress destinationIP;
 	int destPort;
-	/*________________________*/
+	/* ________________________ */
 
-	
-	/*________________________*/
+	/* ________________________ */
 	int incomingPort;
-	InetAddress incomingIP;	
-	/*________________________*/
-	
+	InetAddress incomingIP;
+	/* ________________________ */
+
+	/* __________SENDING MESSAGES______________ */
 	public textingWindow(int usePort, InetAddress destIP, int destPort) {
 		this.usePort = usePort;
 		socket = new Socket(this.usePort);
 		this.destinationIP = destIP;
 		this.destPort = destPort;
+
 		
-		Thread newMessage = new Thread( () -> { 
+		Thread newMessage = new Thread(() -> {
 			DatagramPacket packet;
-			do{
+			do {
 				packet = socket.receive();
-				if(packet != null){
+				if (packet != null) {
 					String message = new String(packet.getData());
 					System.out.println(" TEXTING WINDOW NEW MESSAGE: " + message + "\n");
-					Platform.runLater(() -> area.appendText(" PORT = " + destPort + 
-							" IP = " + destinationIP + " SAID: " + message + "\n"));	
+					Platform.runLater(() -> area
+							.appendText(" PORT = " + destPort + " IP = " + destinationIP + " SAID: " + message + "\n"));
 				}
-				
-			}while(true);
-			
+
+			} while (true);
+
 		});
-		
+
 		newMessage.start();
-		
+
 	}
-	
-	public textingWindow(Socket receivingSocket, InetAddress incomingIP, int incomingPort){
+
+	/* ___________INCOMING MESSAGES_____________ */
+	public textingWindow(Socket receivingSocket, InetAddress incomingIP, int incomingPort) {
 		this.incomingPort = incomingPort;
 		this.incomingIP = incomingIP;
 		this.socket = receivingSocket;
 
 	}
-	
-	public void display(String title){
+	/*DISPLAY METHOD SHOWS THE CHAT WINDOW WHEN THE START CHAT BUTTON IS CLICKED 
+	 * */
+	public void display(String title) {
 		Stage window = new Stage();
 		window.setTitle(title);
-		
-		/*Code for TextArea where users messages should appear*/
+
+		/* Code for TextArea where users messages should appear */
 		area = new TextArea();
 		area.setPrefSize(350, 350);
 		area.setEditable(false);
-		/*_______________________________________________________________*/
-		
-		/*Code for the TextField where user type message*/
+		/* _______________________________________________________________ */
+
+		/* Code for the TextField where user type message */
 		TextField messageInput = new TextField();
-		
-		/*_______________________________________________________________*/
-		
-		/*Code for button that closes window*/
-		Button btnClose =  new Button();
-			btnClose.setStyle("-fx-font: 15 arial; -fx-base: #b6e7c9;");
-			btnClose.setText("CLOSE");
-			btnClose.setOnAction(e -> {
-				window.close();
-			});
-		/*_______________________________________________________________*/
-			
-		/*LABEL TO PROVIDE SENDER'S PORT NUMBER*/		
+
+		/* _______________________________________________________________ */
+
+		/* Code for button that closes window */
+		Button btnClose = new Button();
+		btnClose.setStyle("-fx-font: 15 arial; -fx-base: #b6e7c9;");
+		btnClose.setText("CLOSE");
+		btnClose.setOnAction(e -> {
+			window.close();
+		});
+		/* _______________________________________________________________ */
+
+		/* LABEL TO PROVIDE SENDER'S PORT NUMBER */
 		Label portNotification = new Label();
-		portNotification.setText(" Sender's Port is : " + this.usePort 
-				+" Destination port -----> "+ destPort);
-		/*________________________________________________________________*/
-		
-		/*Code for the button that send messages
-		 * When the send button is clicked, it will take the input and save it into a String.
-		 * The send method from the Socket class will take that message.
-		 * */
+		portNotification.setText(" Sender's Port is : " + this.usePort + " Destination port -----> " + destPort);
+		/* ________________________________________________________________ */
+
+		/*
+		 * Code for the button that send messages When the send button is
+		 * clicked, it will take the input and save it into a String. The send
+		 * method from the Socket class will take that message.
+		 */
 		Button btnSend = new Button();
 		btnSend.setDefaultButton(true);
-			btnSend.setText("SEND");
-			btnSend.setStyle("-fx-font: 15 arial; -fx-base: #b6e7c9;");
-			btnSend.setOnAction(e -> {
+		btnSend.setText("SEND");
+		btnSend.setStyle("-fx-font: 15 arial; -fx-base: #b6e7c9;");
+		btnSend.setOnAction(e -> {
 			String message = messageInput.getText().toString();
 			messageInput.clear();
 			area.appendText(" ME: " + message + "\n");
-			
+
 			socket.send(message, destinationIP, destPort);
-			
-		
-			try{
-				TimeUnit.SECONDS.sleep(1);
-			}catch(Exception a){
+
+			try {
+				TimeUnit.SECONDS.sleep(0);
+			} catch (Exception a) {
 				a.printStackTrace();
 				System.exit(-1);
-			}});
+			}
+		});
 
-		/*Layout utilized to place components together*/
+		/* Layout utilized to place components together */
 		VBox layout = new VBox();
-			layout.setSpacing(10);
-			layout.setPadding(new Insets(5));
-			layout.setAlignment(Pos.CENTER_LEFT);
-			layout.getChildren().addAll(area,messageInput,btnSend,btnClose,portNotification);
-		/*__________________________________________________________________*/
-		
-		/*This makes the scene visible*/
+		layout.setSpacing(10);
+		layout.setPadding(new Insets(5));
+		layout.setAlignment(Pos.CENTER_LEFT);
+		layout.getChildren().addAll(area, messageInput, btnSend, btnClose, portNotification);
+		/* __________________________________________________________________ */
+
+		/* This makes the scene visible */
 		Scene scene = new Scene(layout, 500, 500);
 		window.setScene(scene);
 		window.show();
-		}
-	
-	
-	public void displayIncome(String title){
-			Stage window = new Stage();
-			window.setTitle(title);
-			
-			/*Code for TextArea where users messages should appear*/
-			area = new TextArea();
-			area.setPrefSize(350, 350);
-			area.setEditable(false);
-			/*_______________________________________________________________*/
-			
-			/*Code for the TextField where user type message*/
-			TextField messageInput = new TextField();
-			
-			/*_______________________________________________________________*/
-			
-			/*Code for button that closes window*/
-			Button btnClose =  new Button();
-				btnClose.setStyle("-fx-font: 15 arial; -fx-base: #b6e7c9;");
-				btnClose.setText("CLOSE");
-				btnClose.setOnAction(e -> {
-					window.close();
-				});
-			/*_______________________________________________________________*/
-				
-			/*LABEL TO PROVIDE SENDER'S PORT NUMBER*/		
-			Label portNotification = new Label();
-			portNotification.setText(" Sender's Port is : " + this.socket
-					+" Destination port -----> "+ incomingPort);
-			/*________________________________________________________________*/
-			
-			/*Code for the button that send messages
-			 * When the send button is clicked, it will take the input and save it into a String.
-			 * The send method from the Socket class will take that message.
-			 * */
-			Button btnSend = new Button();
-			btnSend.setDefaultButton(true);
-				btnSend.setText("SEND");
-				btnSend.setStyle("-fx-font: 15 arial; -fx-base: #b6e7c9;");
-				btnSend.setOnAction(e -> {
-				String message = messageInput.getText().toString();
-				messageInput.clear();
-				area.appendText(" ME: " + message + "\n");
-
-				
-				socket.send(message, incomingIP, incomingPort);
-				
-				try{
-					TimeUnit.SECONDS.sleep(1);
-				}catch(Exception a){
-					a.printStackTrace();
-					System.exit(-1);
-				}});
-
-			/*Layout utilized to place components together*/
-			VBox layout = new VBox();
-				layout.setSpacing(10);
-				layout.setPadding(new Insets(5));
-				layout.setAlignment(Pos.CENTER_LEFT);
-				layout.getChildren().addAll(area,messageInput,btnSend,btnClose,portNotification);
-			/*__________________________________________________________________*/
-			
-			/*This makes the scene visible*/
-			Scene scene = new Scene(layout, 500, 500);
-			window.setScene(scene);
-			window.show();
-		}
 	}
-		
 
+	/*DISPLAY INCOME METHOD SHOWS THE WINDOW FROM INCOMING MESSAGES*/ 
+	public void displayIncome(String title) {
+		Stage window = new Stage();
+		window.setTitle(title);
+
+		/* Code for TextArea where users messages should appear */
+		area = new TextArea();
+		area.setPrefSize(350, 350);
+		area.setEditable(false);
+		/* _______________________________________________________________ */
+
+		/* Code for the TextField where user type message */
+		TextField messageInput = new TextField();
+
+		/* _______________________________________________________________ */
+
+		/* Code for button that closes window */
+		Button btnClose = new Button();
+		btnClose.setStyle("-fx-font: 15 arial; -fx-base: #b6e7c9;");
+		btnClose.setText("CLOSE");
+		btnClose.setOnAction(e -> {
+			window.close();
+		});
+		/* _______________________________________________________________ */
+
+		/* LABEL TO PROVIDE SENDER'S PORT NUMBER */
+		Label portNotification = new Label();
+		portNotification.setText(" Sender's Port is : " + this.socket + " Destination port -----> " + incomingPort);
+		/* ________________________________________________________________ */
+
+		/*
+		 * Code for the button that send messages When the send button is
+		 * clicked, it will take the input and save it into a String. The send
+		 * method from the Socket class will take that message.
+		 */
+		Button btnSend = new Button();
+		btnSend.setDefaultButton(true);
+		btnSend.setText("SEND");
+		btnSend.setStyle("-fx-font: 15 arial; -fx-base: #b6e7c9;");
+		btnSend.setOnAction(e -> {
+			String message = messageInput.getText().toString();
+			messageInput.clear();
+			area.appendText(" ME: " + message + "\n");
+
+			socket.send(message, incomingIP, incomingPort);
+
+			try {
+				TimeUnit.SECONDS.sleep(0);
+			} catch (Exception a) {
+				a.printStackTrace();
+				System.exit(-1);
+			}
+		});
+
+		/* Layout utilized to place components together */
+		VBox layout = new VBox();
+		layout.setSpacing(10);
+		layout.setPadding(new Insets(5));
+		layout.setAlignment(Pos.CENTER_LEFT);
+		layout.getChildren().addAll(area, messageInput, btnSend, btnClose, portNotification);
+		/* __________________________________________________________________ */
+
+		/* This makes the scene visible */
+		Scene scene = new Scene(layout, 500, 500);
+		window.setScene(scene);
+		window.show();
+	}
+}
